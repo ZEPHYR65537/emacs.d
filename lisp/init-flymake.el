@@ -13,9 +13,27 @@
      (append (default-value 'flycheck-disabled-checkers)
              '(emacs-lisp emacs-lisp-checkdoc emacs-lisp-package sh-shellcheck))))
 
-  (add-hook 'flymake-mode-hook 'flymake-flycheck-auto)
-  (add-hook 'prog-mode-hook 'flymake-mode)
-  (add-hook 'text-mode-hook 'flymake-mode))
+  (defun sanityinc/maybe-enable-flymake-flycheck ()
+    "Use Flycheck backends for files unless Texlab owns diagnostics."
+    (when (and buffer-file-name
+               (not (derived-mode-p 'LaTeX-mode)))
+      (flymake-flycheck-auto)))
+
+  (add-hook 'flymake-mode-hook #'sanityinc/maybe-enable-flymake-flycheck)
+  (defun sanityinc/maybe-enable-flymake-for-file ()
+    "Enable Flymake in file-backed programming buffers."
+    (when buffer-file-name
+      (flymake-mode 1)))
+
+  (add-hook 'prog-mode-hook #'sanityinc/maybe-enable-flymake-for-file)
+
+  (defun sanityinc/maybe-enable-flymake-in-text-mode ()
+    "Enable generic Flymake except where Texlab will take ownership."
+    (when (and buffer-file-name
+               (not (derived-mode-p 'LaTeX-mode)))
+      (flymake-mode 1)))
+
+  (add-hook 'text-mode-hook #'sanityinc/maybe-enable-flymake-in-text-mode))
 
 (with-eval-after-load 'flymake
   ;; Provide some flycheck-like bindings in flymake mode to ease transition

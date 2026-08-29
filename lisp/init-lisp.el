@@ -271,7 +271,12 @@ there is no current file, eval the current buffer."
 
 
 (when (maybe-require-package 'package-lint-flymake)
-  (add-hook 'emacs-lisp-mode-hook #'package-lint-flymake-setup))
+  (defun sanityinc/package-lint-flymake-setup-for-file ()
+    "Enable package-lint only for file-backed Emacs Lisp buffers."
+    (when buffer-file-name
+      (package-lint-flymake-setup)))
+  (add-hook 'emacs-lisp-mode-hook
+            #'sanityinc/package-lint-flymake-setup-for-file))
 
 
 

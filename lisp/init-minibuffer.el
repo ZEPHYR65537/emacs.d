@@ -19,7 +19,9 @@
                      embark-around-action-hooks)))
 
   (when (maybe-require-package 'embark-consult)
-    (require 'embark-consult)
+    ;; Embark loads embark-consult automatically once both packages are in
+    ;; use.  Keeping it lazy avoids loading the full Consult/Embark stack just
+    ;; to display the first frame.
     (defmacro sanityinc/no-consult-preview (&rest cmds)
       `(with-eval-after-load 'consult
          (consult-customize ,@cmds :preview-key "M-P")))

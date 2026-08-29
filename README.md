@@ -1,7 +1,15 @@
-[![Build Status](https://github.com/purcell/emacs.d/workflows/CI/badge.svg)](https://github.com/purcell/emacs.d/actions)
+[![Build Status](https://github.com/ZEPHYR65537/emacs.d/workflows/CI/badge.svg)](https://github.com/ZEPHYR65537/emacs.d/actions)
 <a href="https://www.patreon.com/sanityinc"><img alt="Support me" src="https://img.shields.io/badge/Support%20Me-%F0%9F%92%97-ff69b4.svg"></a>
 
 # A reasonable Emacs config
+
+This repository is a personal fork of
+[Purcell's emacs.d](https://github.com/purcell/emacs.d).  It preserves
+Purcell's `package.el`-based structure while adding a documented,
+cross-platform production environment for LaTeX and Typst.  See
+[the LaTeX and Typst guide](docs/latex-typst.md) for architecture, external
+tools, workflows, troubleshooting, performance notes, and the verification
+matrix.
 
 This is my emacs configuration tree, continually used and tweaked
 since 2000, and it may be a good starting point for other Emacs
@@ -61,7 +69,7 @@ To install, clone this repo to `~/.emacs.d`, i.e. ensure that the
 `init.el` contained in this repo ends up at `~/.emacs.d/init.el`:
 
 ```
-git clone https://github.com/purcell/emacs.d.git ~/.emacs.d
+git clone https://github.com/ZEPHYR65537/emacs.d.git ~/.emacs.d
 ```
 
 Upon starting up Emacs for the first time, further third-party

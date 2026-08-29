@@ -11,6 +11,14 @@
       (expand-file-name (format "elpa-%s.%s" emacs-major-version emacs-minor-version)
                         user-emacs-directory))
 
+;; Loading one generated activation file is substantially faster than reading
+;; every installed package descriptor and autoload file on each startup.  Keep
+;; it beside the version-specific package tree so different Emacs versions do
+;; not share byte code.  package.el refreshes it after installs and removals.
+(setq package-quickstart t
+      package-quickstart-file
+      (expand-file-name "package-quickstart.el" package-user-dir))
+
 
 
 ;;; Standard package repositories
@@ -69,6 +77,19 @@ locate PACKAGE."
 (setq package-native-compile t)
 (package-initialize)
 
+(defun sanityinc/package-quickstart-refresh-if-missing ()
+  "Create the package quickstart cache after the first graphical startup."
+  (unless (or (file-readable-p package-quickstart-file)
+              (file-readable-p (concat package-quickstart-file "c")))
+    (package-quickstart-refresh)))
+
+;; Do not make the first frame wait for cache generation.  Subsequent package
+;; operations refresh the cache through package.el's normal lifecycle hooks.
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (run-with-idle-timer
+             2 nil #'sanityinc/package-quickstart-refresh-if-missing)))
+
 
 ;; package.el updates the saved version of package-selected-packages correctly only
 ;; after custom-file has been loaded, which is a bug. We work around this by adding
@@ -109,8 +130,14 @@ advice for `require-package', to which ARGS are passed."
   (require-package 'seq)
   (add-hook 'after-init-hook
             (lambda ()
-              (package--save-selected-packages
-               (seq-uniq (append sanityinc/required-packages package-selected-packages))))))
+              ;; Avoid invoking Customize and rewriting custom.el on every
+              ;; startup when the selected package set is already complete.
+              (when (seq-difference sanityinc/required-packages
+                                    package-selected-packages #'eq)
+                (package--save-selected-packages
+                 (seq-uniq
+                  (append sanityinc/required-packages
+                          package-selected-packages)))))))
 
 
 (let ((package-check-signature nil))

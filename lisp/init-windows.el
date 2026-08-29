@@ -112,7 +112,11 @@ Call a second time to restore the original window configuration."
 
 (when (maybe-require-package 'pulsar)
   (setq-default pulsar-pulse-region-functions nil)
-  (pulsar-global-mode t))
+  ;; Pulsar is visual polish and may load the sizeable `pulse' library.  Let
+  ;; the first frame become interactive before enabling it during idle time.
+  (add-hook 'emacs-startup-hook
+            (lambda ()
+              (run-with-idle-timer 1 nil #'pulsar-global-mode 1))))
 
 (setq-default window-combination-resize t)
 

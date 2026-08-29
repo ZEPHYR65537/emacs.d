@@ -3,8 +3,6 @@
 ;;; Code:
 
 (when (maybe-require-package 'projectile)
-  (add-hook 'after-init-hook 'projectile-mode)
-
   ;; Shorter modeline
   (setq-default projectile-mode-line-prefix " Proj")
 
@@ -13,6 +11,17 @@
 
   (with-eval-after-load 'projectile
     (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map))
+
+  (defun sanityinc/projectile-command-prefix ()
+    "Load Projectile on first use, then activate its normal prefix map."
+    (interactive)
+    (projectile-mode 1)
+    (set-transient-map projectile-command-map t)
+    (message "Projectile command:"))
+
+  ;; Once Projectile is loaded its minor-mode map takes precedence and this
+  ;; becomes the ordinary `projectile-command-map' prefix binding.
+  (global-set-key (kbd "C-c p") #'sanityinc/projectile-command-prefix)
 
   (maybe-require-package 'ibuffer-projectile))
 

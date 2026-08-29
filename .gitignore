@@ -43,6 +43,8 @@ site-lisp/package/
 /recentf
 /viper
 /projectile-bookmarks.eld
+/projectile-frecency.eld
+/server/
 /anaconda-mode/
 /.historian
 /.uptimes.el

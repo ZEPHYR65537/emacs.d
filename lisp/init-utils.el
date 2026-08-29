@@ -42,6 +42,14 @@ BUFFER and ALIST are as for `display-buffer-full-frame'."
   "Remove entries from `auto-mode-alist' that are for `MODE'."
   (setq auto-mode-alist (seq-remove (lambda (x) (eq mode (cdr x))) auto-mode-alist)))
 
+(defun sanityinc/require-config-after-load (feature config &optional package)
+  "Load CONFIG after FEATURE, while preserving first-install behaviour.
+When PACKAGE is non-nil and not installed, load CONFIG immediately so its
+normal Purcell `require-package' declaration can install and register it."
+  (if (and package (not (package-installed-p package)))
+      (require config)
+    (eval-after-load feature `(require ',config))))
+
 ;; Like diminish, but for major modes
 (defun sanityinc/set-major-mode-name (name)
   "Override the major mode NAME in this buffer."
