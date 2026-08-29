@@ -118,9 +118,12 @@ executable instead of assuming a fixed Program Files location."
   "Continuously preview changed, visible LaTeX fragments in graphical frames."
   (when (and (display-images-p)
              (executable-find "latex")
+             ;; The production default converts PDF/PS fragments through
+             ;; Ghostscript.  `preview-gs-command' includes TeX Live's rungs,
+             ;; MiKTeX's mgs, and ordinary Ghostscript discovery.
+             (and (boundp 'preview-gs-command) preview-gs-command)
              (or (not (eq system-type 'windows-nt))
-                 (and (sanityinc/latex-windows-posix-shell)
-                      (executable-find "dvipng"))))
+                 (sanityinc/latex-windows-posix-shell)))
     ;; Never let a background preview timer prompt for an unknown master file.
     ;; Included files activate after their file-local TeX-master is applied.
     (when (and (or (eq TeX-master t)
@@ -186,19 +189,20 @@ executable instead of assuming a fixed Program Files location."
           #'sanityinc/latex-windows-process-environment)
 
 (with-eval-after-load 'preview
-  ;; The supported dvi* creator calls dvipng directly and avoids the extra
-  ;; dvips -> streaming Ghostscript stages.  Besides being faster, this avoids
-  ;; a Windows race where Ghostscript reports a page before its PNG is visible.
-  (when (executable-find "dvipng")
-    (setq preview-image-type 'dvi*))
+  ;; Keep AUCTeX's documented PDF/PS -> PNG pipeline as the robust default.
+  ;; The faster dvi* path cannot render CTeX/dvipdfmx `pdf:mapline' specials
+  ;; and leaves previews stuck at the working icon.  Ghostscript keeps one
+  ;; asynchronous process per preview run and handles PDF-producing engines.
+  (setq preview-image-type 'png)
   ;; Keep the source visible while a preview is regenerated and avoid noisy
   ;; messages.  preview-auto skips valid overlays, so unchanged formulas are
   ;; not rendered again.
   (setq preview-protect-point t
         preview-locating-previews-message nil
         preview-leave-open-previews-visible t
-        preview-LaTeX-command-replacements
-        '(preview-LaTeX-disable-pdfoutput)))
+        ;; Do not force pdfLaTeX into DVI mode: CTeX and custom classes may
+        ;; require PDF-capable font and driver specials.
+        preview-LaTeX-command-replacements nil))
 
 (with-eval-after-load 'preview-auto
   ;; Scan only a modest window around point, after a short idle interval.  This

@@ -113,8 +113,8 @@ remain the responsibility of the operating system or the user.
 - `chktex` for diagnostics.
 - `latexindent` for formatting through Texlab.
 - [Texlab](https://github.com/latex-lsp/texlab) for LSP features.
-- Ghostscript or `dvipng` for preview-latex image generation.  The optimized
-  Windows path requires `dvipng`.
+- Ghostscript for preview-latex image generation.  TeX Live's `rungs` wrapper,
+  MiKTeX's `mgs`, and a normal `gs` executable are discovered by AUCTeX.
 - On Windows, a POSIX-compatible shell supported by AUCTeX.  Git for Windows'
   `sh.exe`, MSYS2, or Cygwin is suitable; discovery is automatic when `sh` or
   `git` is on `PATH`.
@@ -272,20 +272,21 @@ Preamble caching is enabled for pdfLaTeX, where preview-latex can obtain the
 largest speed-up.  It is disabled for XeLaTeX and LuaLaTeX because upstream
 support is absent or restricted for those engines.
 
-The preview pipeline prefers DVI generation because it is usually faster for
-small fragments.  Documents whose preambles only work in PDF mode may need a
-project-local override of `preview-LaTeX-command-replacements`.  On systems
-with `dvipng`, the `dvi*`/PNG preview path can be selected instead of
-Ghostscript as documented by preview-auto.
+The production default keeps AUCTeX's documented PDF/PS-to-PNG pipeline.
+Forcing pdfLaTeX into DVI mode is faster on simple documents, but it fails for
+CTeX and custom classes that emit dvipdfmx font specials such as
+`pdf:mapline`.  AUCTeX keeps one asynchronous Ghostscript process for a
+preview run and prioritizes visible fragments, while preview-auto still avoids
+regenerating valid overlays.  Compatible projects may opt into AUCTeX's public
+`dvi*`/`dvipng` path with a project-local `preview-image-type`, but that is an
+explicit performance tradeoff rather than the portable default.
 
 On Windows, AUCTeX's documented MSYS/Cygwin-style shell requirement is met by
 discovering `sh` on `PATH` or deriving Git for Windows' shell from the active
 `git` executable.  Only AUCTeX's `TeX-shell` is changed; PowerShell, the user's
 interactive shell, and `M-x shell` are untouched.  TeX subprocess buffers use
 the portable `C` locale, and `MSYS2_ARG_CONV_EXCL=*` prevents MSYS from
-rewriting preview-latex's `/AUCTEXINPUT{...}` macro as a Windows path.  With
-`dvipng`, preview-latex uses its public `dvi*` image type directly, avoiding the
-extra dvips-to-streaming-Ghostscript stage and retaining fragment-level work.
+rewriting preview-latex's `/AUCTEXINPUT{...}` macro as a Windows path.
 
 ## Typst workflow
 
@@ -340,7 +341,7 @@ every setting the project needs rather than assuming a deep merge.
 | Texlab | LaTeX editing/build/preview remain available; AUCTeX uses ChkTeX if present |
 | ChkTeX | LaTeX editing/build/preview still work; no fallback lint diagnostics |
 | latexindent | Texlab formatting fails cleanly; other LSP features continue |
-| Ghostscript/dvipng | LaTeX source and builds work; inline image preview is unavailable |
+| Ghostscript | LaTeX source and builds work; inline image preview is unavailable |
 | Typst grammar | `.typ` opens in `text-mode` and remains editable |
 | Typst CLI | Syntax/LSP features can work; compile and watch commands are unavailable |
 | Tinymist | Typst tree-sitter editing and CLI builds work; LSP and browser preview are unavailable |
