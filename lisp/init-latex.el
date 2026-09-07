@@ -35,6 +35,11 @@ When nil, search PATH and then the configuration-local `.cache/bin' directory."
       font-latex-fontify-script 'multi-level
       font-latex-fontify-sectioning 1.15)
 (setq-default TeX-master nil)
+;; Use AUCTeX's public output-directory mechanism so one-shot builds,
+;; continuous latexmk, SyncTeX, and preview-latex share one project-local
+;; directory.  Directory-local and file-local values can still override this
+;; default for projects whose toolchain requires outputs beside the master.
+(setq-default TeX-output-dir "build")
 
 (defconst sanityinc/latex-texlab-settings
   '(:build (:onSave :json-false)

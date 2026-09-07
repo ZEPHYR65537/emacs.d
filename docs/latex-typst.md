@@ -218,6 +218,38 @@ Use `default`, `xetex`, or `luatex` for `TeX-engine`.  AUCTeX, continuous
 latexmk, and preview settings are refreshed after file-local variables are
 applied, so the selected engine stays consistent across the workflow.
 
+### Generated files and cleanup
+
+The default `TeX-output-dir` is the project-local `build/` directory, resolved
+relative to the AUCTeX master document.  AUCTeX creates it when needed.  The
+one-shot LaTeXMk command, continuous latexmk watcher, SyncTeX-aware output
+lookup, preview-latex region files, preamble dumps, and rendered preview images
+all use this directory.  Source directories therefore contain one generated
+directory instead of loose `.aux`, `.log`, `.fls`, `.synctex.gz`, preview PNG,
+and `_region_.*` files.
+
+Add `/build/` to each LaTeX project's `.gitignore`; the generated directory is
+not part of the Emacs configuration repository.  Stop continuous latexmk with
+`C-c C-w` before deleting `build/`.  It is safe to delete the directory when no
+build is running; the next build or inline preview recreates it.
+
+AUCTeX's `auto/` directory is separate: it stores parsed editor metadata used
+for completion, references, and multi-file navigation, and is controlled by
+`TeX-auto-save`, not `TeX-output-dir`.  Ignore `/auto/` in projects where it is
+generated.  It should not contain compiler or preview output.
+
+Some unusual classes or packages require intermediate files beside the master
+document.  Such a project can opt out without changing the shared module:
+
+```elisp
+((LaTeX-mode . ((TeX-output-dir . nil))))
+```
+
+Place that value in the project's `.dir-locals.el`.  Setting a different
+non-hidden relative directory there is also supported.  For multi-file
+documents the default `build/` remains relative to the declared `TeX-master`,
+so included chapters share the master's output directory.
+
 ### Editing and completion
 
 - Corfu displays completion candidates contributed by AUCTeX and Texlab.
@@ -418,6 +450,8 @@ normal graphical session:
 - at least three warm-start measurements, with the median and slowest module
   recorded;
 - opening standalone and multi-file LaTeX documents;
+- placement of one-shot, continuous, and preview-latex output under the
+  master's `build/` directory, with no compiler output beside source files;
 - AUCTeX parsing, RefTeX labels/citations, CDLaTeX, Laas, and Corfu;
 - Texlab connection, completion, navigation, formatting, and exactly one
   diagnostics backend;
