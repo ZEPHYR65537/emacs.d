@@ -295,10 +295,15 @@ backend instead.
 
 ### Incremental inline preview
 
-`preview-auto-mode` scans a bounded region around point after a short idle
+`preview-auto-mode` scans a bounded region around point at a short timer
 interval.  Its upstream implementation retains valid overlays and renders the
 nearest stale region, so unchanged formulas are not regenerated.  A full
 document build is not launched after every keystroke.
+
+Editing a formula shows its source until its preview is regenerated.
+`preview-leave-open-previews-visible` is disabled because AUCTeX 14.1.2
+deletes an invalidated preview's image files; retaining the old image can
+cause missing-PNG errors and stall the Ghostscript conversion queue.
 
 Preamble caching is enabled for pdfLaTeX, where preview-latex can obtain the
 largest speed-up.  It is disabled for XeLaTeX and LuaLaTeX because upstream

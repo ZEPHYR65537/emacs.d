@@ -199,18 +199,19 @@ executable instead of assuming a fixed Program Files location."
   ;; and leaves previews stuck at the working icon.  Ghostscript keeps one
   ;; asynchronous process per preview run and handles PDF-producing engines.
   (setq preview-image-type 'png)
-  ;; Keep the source visible while a preview is regenerated and avoid noisy
-  ;; messages.  preview-auto skips valid overlays, so unchanged formulas are
-  ;; not rendered again.
+  ;; Show source while editing and avoid noisy messages.  AUCTeX 14.1.2
+  ;; deletes an overlay's image files when edits disable it, so retaining
+  ;; that image would display a deleted PNG and can stall regeneration.
+  ;; preview-auto still skips valid overlays for unchanged formulas.
   (setq preview-protect-point t
         preview-locating-previews-message nil
-        preview-leave-open-previews-visible t
+        preview-leave-open-previews-visible nil
         ;; Do not force pdfLaTeX into DVI mode: CTeX and custom classes may
         ;; require PDF-capable font and driver specials.
         preview-LaTeX-command-replacements nil))
 
 (with-eval-after-load 'preview-auto
-  ;; Scan only a modest window around point, after a short idle interval.  This
+  ;; Scan only a modest window around point at a short timer interval.  This
   ;; keeps large documents responsive while covering the visible editing area.
   (setq preview-auto-interval 0.3
         preview-auto-chars-above 3000
