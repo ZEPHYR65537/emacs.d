@@ -3,6 +3,7 @@
 ;;; Code:
 
 (require 'seq)
+(require 'init-latex-preview)
 
 (require-package 'auctex)
 (require-package 'preview-auto)
@@ -211,8 +212,9 @@ executable instead of assuming a fixed Program Files location."
         preview-LaTeX-command-replacements nil))
 
 (with-eval-after-load 'preview-auto
-  ;; Scan only a modest window around point at a short timer interval.  This
-  ;; keeps large documents responsive while covering the visible editing area.
+  ;; Scan a modest window around point.  init-latex-preview gates this timer
+  ;; on an actual typing pause, while letting successive idle scans finish
+  ;; the remaining fragments without an additional delay per fragment.
   (setq preview-auto-interval 0.3
         preview-auto-chars-above 3000
         preview-auto-chars-below 4000

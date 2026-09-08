@@ -295,15 +295,47 @@ backend instead.
 
 ### Incremental inline preview
 
-`preview-auto-mode` scans a bounded region around point at a short timer
-interval.  Its upstream implementation retains valid overlays and renders the
+`preview-auto-mode` checks a bounded region around point every 0.3 seconds,
+but starts work only after 0.8 seconds without input.  Customize
+`sanityinc/latex-preview-idle-delay` to change that typing pause.
+Its upstream implementation retains valid overlays and renders the
 nearest stale region, so unchanged formulas are not regenerated.  A full
 document build is not launched after every keystroke.
 
 Editing a formula shows its source until its preview is regenerated.
 `preview-leave-open-previews-visible` is disabled because AUCTeX 14.1.2
 deletes an invalidated preview's image files; retaining the old image can
-cause missing-PNG errors and stall the Ghostscript conversion queue.
+cause missing-PNG display errors.
+
+There is a separate cancellation race in that AUCTeX version: editing a
+formula waiting for Ghostscript deletes its files but leaves it queued for
+conversion.  `init-latex-preview.el` clears that queued work when the
+disabled preview no longer owns any files.  Ghostscript can then skip it,
+finish the current run, and let automatic preview render the edited formula.
+The guard also ignores a result arriving after the formula was invalidated;
+it leaves pending previews which still own files alone.
+
+A typing pause does not imply valid LaTeX.  Each automatic preview region
+is attempted once per source/build revision.  If it fails, moving the
+cursor or waiting does not continually compile the same input; editing
+the source, updating the master's auxiliary file through a document build,
+or explicitly restarting `preview-auto-mode` permits another attempt.
+Other unattempted regions can still be previewed.
+
+Editing during an automatic preview cancels its obsolete compiler and
+converter processes.  On Windows this terminates the process tree, since
+killing the shell alone can leave pdfLaTeX running.  A separate watchdog
+limits a complete preview attempt to 30 seconds, configurable with
+`sanityinc/latex-preview-timeout`.  These controls apply to preview jobs;
+ordinary LaTeXMk document builds are not cancelled by them.
+Preview output buffers retain their source buffer locally after AUCTeX's
+output-mode initialization, preventing another document's build from
+changing their source association during conversion.
+
+Preview-latex deliberately emits pseudo-errors as part of its rendering
+protocol, so `-halt-on-error` is not a suitable fix.  The compiler retains
+nonstop interaction; the attempt limit and watchdog handle invalid input
+and a compiler that does not finish.
 
 Preamble caching is enabled for pdfLaTeX, where preview-latex can obtain the
 largest speed-up.  It is disabled for XeLaTeX and LuaLaTeX because upstream
@@ -472,6 +504,15 @@ normal graphical session:
 Batch mode may be used for bounded syntax checks, but it is not an acceptance
 environment for images, GUI timers, frames, menus, fonts, or external viewer
 integration.
+
+The cancellation regression tests are in `tests/init-latex-preview-test.el`.
+With the installed AUCTeX package activated, load `init-latex-preview` and
+that test file, then run `M-x ert` with selector `sanityinc/preview-`.
+They cover edits before conversion, edits during conversion, preservation
+of live file ownership, the idle gate, failed-input retry suppression,
+timeouts, and resumption after edits or a mode restart.  GUI verification should also
+edit a formula while conversion is pending, check that the converter exits,
+and check that the edited formula is successfully regenerated.
 
 ## Upstream documentation
 
