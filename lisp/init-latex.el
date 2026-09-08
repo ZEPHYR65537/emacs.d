@@ -260,7 +260,7 @@ executable instead of assuming a fixed Program Files location."
           " %o")
          "SumatraPDF"))
       (setf (alist-get 'output-pdf TeX-view-program-selection)
-            "SumatraPDF"))))
+            '("SumatraPDF")))))
 
 (provide 'init-latex)
 ;;; init-latex.el ends here
