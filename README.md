@@ -65,6 +65,11 @@ that flycheck or flymake use to provide on-the-fly syntax checking.
 
 ## Installation
 
+For the complete personal setup, follow [the migration guide](docs/migration.md).
+It explains the shared/machine-local split, restores independent packages at
+recorded revisions, and lists native tools for each platform. Personal features
+are selected in `lisp/init-personal.el`; unavailable local packages are skipped.
+
 To install, clone this repo to `~/.emacs.d`, i.e. ensure that the
 `init.el` contained in this repo ends up at `~/.emacs.d/init.el`:
 
@@ -76,6 +81,16 @@ Upon starting up Emacs for the first time, further third-party
 packages will be automatically downloaded and installed. If you
 encounter any errors at that stage, try restarting Emacs, and possibly
 running `M-x package-refresh-contents` before doing so.
+
+Restore the independent packages explicitly before starting Emacs:
+
+```
+cd ~/.emacs.d
+emacs -Q --batch -l scripts/bootstrap-local-packages.el -f sanityinc/bootstrap-local-packages
+```
+
+Use `M-x sanityinc/config-doctor` to inspect missing tools. Neither restoration
+nor diagnostics runs automatically during startup.
 
 
 ## Updates
@@ -93,8 +108,8 @@ of the `desktop` and `session` packages.
 
 ## Changing themes and adding your own customization
 
-To add your own customization, use <kbd>M-x customize</kbd>, <kbd>M-x
-customize-themes</kbd> etc. and/or create a file
+Put shared preferences in `lisp/init-personal.el`. For settings specific to one
+machine, use <kbd>M-x customize</kbd> or create the ignored file
 `~/.emacs.d/lisp/init-local.el` which looks like this:
 
 ```el

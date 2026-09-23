@@ -200,7 +200,10 @@
 ;; Locales (setting them earlier in this file doesn't work in X)
 (require 'init-locales)
 
-;; Allow users to provide an optional "init-local" containing personal settings
+;; Versioned personal preferences and optional local-package integrations.
+(require 'init-personal)
+
+;; Optional machine-specific overrides.
 (require 'init-local nil t)
 
 (provide 'init)

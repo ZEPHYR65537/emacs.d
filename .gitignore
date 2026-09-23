@@ -60,3 +60,10 @@ site-lisp/package/
 /projects
 /forge-*.sqlite
 /projectile.cache
+
+# Independent checkouts restored from init-local-package-manifest.el.
+/pkg/
+# Machine-specific settings; shared preferences belong in init-personal.el.
+/lisp/init-local.el
+/lisp/init-preload-local.el
+/recentf.eld

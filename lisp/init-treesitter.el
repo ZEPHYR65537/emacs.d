@@ -42,7 +42,9 @@ Return a list of languages seen along the way."
                 ;; If there's a corresponding -ts mode, remap the standard mode to it
                 (let ((ts-mode-name (intern (concat emacs-lang "-ts-mode")))
                       (regular-mode-name (intern (concat emacs-lang "-mode"))))
-                  (when (fboundp ts-mode-name)
+                  (when (and (fboundp ts-mode-name)
+                             (fboundp 'treesit-ready-p)
+                             (treesit-ready-p (intern emacs-lang) t))
                     (message "init-treesitter: using %s in place of %s" ts-mode-name regular-mode-name)
                     (add-to-list 'major-mode-remap-alist
                                  (cons regular-mode-name ts-mode-name))))
