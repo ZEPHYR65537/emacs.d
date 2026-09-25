@@ -4,6 +4,7 @@
 (require 'cl-lib)
 (require 'preview)
 (require 'preview-auto)
+(require 'init-latex-preview)
 
 (defvar sanityinc/latex-preview-idle-delay)
 
@@ -161,6 +162,9 @@
              ;; Only presentation is stubbed; file deletion and Ghostscript's
              ;; transaction/queue logic run as installed in AUCTeX.
              (cl-letf (((symbol-function 'preview-disabled-string) (lambda (_) ""))
+                       ;; AUCTeX 14.2 calls this directly; neither renderer is
+                       ;; part of the file/queue cancellation contract tested.
+                       ((symbol-function 'preview--string) (lambda (&rest _) ""))
                        ((symbol-function 'preview-toggle) #'ignore))
                ,@body)))
        (when (file-exists-p source-file) (delete-file source-file))

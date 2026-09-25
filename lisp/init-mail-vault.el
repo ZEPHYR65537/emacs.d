@@ -4,40 +4,40 @@
 (require 'cl-lib)
 (require 'subr-x)
 
-(defvar sanityinc/mail-account-name)
-(defvar sanityinc/mail-imap-host)
-(defvar sanityinc/mail-smtp-host)
-(defvar sanityinc/mail-imap-port)
-(defvar sanityinc/mail-smtp-port)
-(defvar sanityinc/mail--login)
-(defvar sanityinc/mail-vault-directory
+(defvar jdd/mail-account-name)
+(defvar jdd/mail-imap-host)
+(defvar jdd/mail-smtp-host)
+(defvar jdd/mail-imap-port)
+(defvar jdd/mail-smtp-port)
+(defvar jdd/mail--login)
+(defvar jdd/mail-vault-directory
   (expand-file-name "emacs/mail/credentials/"
                     (or (getenv "XDG_DATA_HOME") (expand-file-name "~/.local/share/"))))
-(defvar sanityinc/mail-gpg-program nil
+(defvar jdd/mail-gpg-program nil
   "Optional GPG executable path.  No credential belongs in this variable.")
-(defvar sanityinc/mail-vault--profile nil
+(defvar jdd/mail-vault--profile nil
   "Decrypted profile for this session only.  Never persist or log this variable.")
 
-(defun sanityinc/mail-vault-file ()
+(defun jdd/mail-vault-file ()
   "Return the portable ciphertext path, without reading its contents."
-  (expand-file-name "account.gpg" sanityinc/mail-vault-directory))
+  (expand-file-name "account.gpg" jdd/mail-vault-directory))
 
-(defun sanityinc/mail-vault-enabled-p ()
+(defun jdd/mail-vault-enabled-p ()
   "Whether the user explicitly saved an encrypted mail profile."
-  (file-exists-p (sanityinc/mail-vault-file)))
+  (file-exists-p (jdd/mail-vault-file)))
 
-(defun sanityinc/mail-vault--gpg ()
+(defun jdd/mail-vault--gpg ()
   "Find GnuPG, including existing Windows distributions without changing PATH."
-  (or sanityinc/mail-gpg-program (executable-find "gpg") (executable-find "gpg2")
+  (or jdd/mail-gpg-program (executable-find "gpg") (executable-find "gpg2")
       (and (eq system-type 'windows-nt)
            (cl-find-if #'file-executable-p
                        (list (expand-file-name "~/scoop/apps/git/current/usr/bin/gpg.exe")
                              "C:/Program Files/Git/usr/bin/gpg.exe"
                              "C:/Program Files (x86)/GnuPG/bin/gpg.exe"
                              "C:/Program Files/GnuPG/bin/gpg.exe")))
-      (user-error "Install GnuPG 2.x or set sanityinc/mail-gpg-program")))
+      (user-error "Install GnuPG 2.x or set jdd/mail-gpg-program")))
 
-(defun sanityinc/mail-vault--run (encrypt passphrase &optional plaintext)
+(defun jdd/mail-vault--run (encrypt passphrase &optional plaintext)
   "Run GPG through pipes only.  ENCRYPT selects encryption of PLAINTEXT.
 PASSPHRASE is the first stdin line, never a command argument or file.
 Decryption reads ciphertext from disk and emits plaintext into Lisp memory.
@@ -45,8 +45,8 @@ Do not replace this with epg-decrypt-string: it uses a plaintext temp file."
   (when (or (string-empty-p passphrase) (string-match-p "[\r\n]" passphrase))
     (user-error "Vault passphrase must be nonempty and on one line"))
   (let* ((debug-on-error nil) (debug-on-quit nil) (debug-on-signal nil)
-         (gpg (sanityinc/mail-vault--gpg))
-         (gpg-home (expand-file-name "gpg-home/" sanityinc/mail-vault-directory))
+         (gpg (jdd/mail-vault--gpg))
+         (gpg-home (expand-file-name "gpg-home/" jdd/mail-vault-directory))
          (output (unibyte-string))
          (process-connection-type nil)
          (input (concat (encode-coding-string passphrase 'utf-8-unix) "\n"
@@ -58,10 +58,10 @@ Do not replace this with epg-decrypt-string: it uses a plaintext temp file."
                   (if encrypt
                       '("--cipher-algo" "AES256" "--s2k-mode" "3"
                         "--s2k-digest-algo" "SHA256" "--s2k-count" "65011712" "--symmetric")
-                    (list "--decrypt" (sanityinc/mail-vault-file)))))
+                    (list "--decrypt" (jdd/mail-vault-file)))))
          process stderr-process succeeded)
     (make-directory gpg-home t)
-    (set-file-modes sanityinc/mail-vault-directory #o700)
+    (set-file-modes jdd/mail-vault-directory #o700)
     (set-file-modes gpg-home #o700)
     (unwind-protect
         (progn
@@ -89,13 +89,13 @@ Do not replace this with epg-decrypt-string: it uses a plaintext temp file."
       (when (processp process) (delete-process process))
       (when (processp stderr-process) (delete-process stderr-process)))))
 
-(defun sanityinc/mail-vault-lock ()
+(defun jdd/mail-vault-lock ()
   "Forget the decrypted profile.  The encrypted file is retained."
-  (when-let* ((secret (plist-get sanityinc/mail-vault--profile :password)))
+  (when-let* ((secret (plist-get jdd/mail-vault--profile :password)))
     (when (stringp secret) (clear-string secret)))
-  (setq sanityinc/mail-vault--profile nil))
+  (setq jdd/mail-vault--profile nil))
 
-(defun sanityinc/mail-vault--validate (profile &optional require-secret)
+(defun jdd/mail-vault--validate (profile &optional require-secret)
   "Validate decrypted PROFILE without including its values in errors."
   (unless (and (equal (plist-get profile :version) 1)
                (cl-every (lambda (key) (stringp (plist-get profile key)))
@@ -112,8 +112,8 @@ Do not replace this with epg-decrypt-string: it uses a plaintext temp file."
                          '(:imap-port :smtp-port))
                (cl-every (lambda (key) (member (plist-get profile key) '("tls" "starttls")))
                          '(:imap-security :smtp-security))
-               (or (null (plist-get profile :tls-priority))
-                   (stringp (plist-get profile :tls-priority)))
+               (member (plist-get profile :tls-priority)
+                       '(nil "NORMAL:-VERS-TLS1.3"))
                (string-match-p "\\`[^[:space:]<>@]+@[^[:space:]<>@]+\\'"
                                (plist-get profile :email))
                (not (string-empty-p (plist-get profile :login)))
@@ -125,32 +125,32 @@ Do not replace this with epg-decrypt-string: it uses a plaintext temp file."
     (user-error "Invalid encrypted mail profile"))
   profile)
 
-(defun sanityinc/mail-vault--unlock ()
+(defun jdd/mail-vault--unlock ()
   "Unlock once per session, without keeping the passphrase or plaintext files."
-  (or sanityinc/mail-vault--profile
+  (or jdd/mail-vault--profile
       (let ((debug-on-error nil) (debug-on-quit nil) (debug-on-signal nil)
             passphrase bytes plaintext)
         (unwind-protect
             (progn
               (setq passphrase (read-passwd "Unlock encrypted mail vault: ")
-                    bytes (sanityinc/mail-vault--run nil passphrase)
+                    bytes (jdd/mail-vault--run nil passphrase)
                     plaintext (decode-coding-string bytes 'utf-8-unix))
               (condition-case nil
-                  (setq sanityinc/mail-vault--profile
-                        (sanityinc/mail-vault--validate
+                  (setq jdd/mail-vault--profile
+                        (jdd/mail-vault--validate
                          (json-parse-string plaintext :object-type 'plist :null-object nil) t))
                 (error (user-error "Invalid encrypted mail profile"))))
           (dolist (value (list passphrase bytes plaintext))
             (when (stringp value) (clear-string value)))))))
 
-(defun sanityinc/mail-vault-identity ()
+(defun jdd/mail-vault-identity ()
   "Return only identity fields from the locally unlocked profile."
-  (cl-loop for (key value) on (sanityinc/mail-vault--unlock) by #'cddr
+  (cl-loop for (key value) on (jdd/mail-vault--unlock) by #'cddr
            unless (eq key :password) append (list key value)))
 
-(defun sanityinc/mail-vault-save (profile)
+(defun jdd/mail-vault-save (profile)
   "Save PROFILE as AES256 OpenPGP ciphertext, with no plaintext temp files."
-  (sanityinc/mail-vault--validate profile t)
+  (jdd/mail-vault--validate profile t)
   (let ((debug-on-error nil) (debug-on-quit nil) (debug-on-signal nil)
         (file-name-handler-alist nil)
         (coding-system-for-write 'binary)
@@ -160,52 +160,52 @@ Do not replace this with epg-decrypt-string: it uses a plaintext temp file."
         (progn
           (setq passphrase (read-passwd "Choose independent vault passphrase: " t)
                 plaintext (json-serialize profile :null-object nil)
-                ciphertext (sanityinc/mail-vault--run t passphrase plaintext)
-                temporary (make-temp-file (expand-file-name ".account-" sanityinc/mail-vault-directory)))
+                ciphertext (jdd/mail-vault--run t passphrase plaintext)
+                temporary (make-temp-file (expand-file-name ".account-" jdd/mail-vault-directory)))
           (set-file-modes temporary #o600)
           ;; Only ciphertext reaches write-region, including atomic replacements.
           (write-region ciphertext nil temporary nil 'silent)
-          (rename-file temporary (sanityinc/mail-vault-file) t)
+          (rename-file temporary (jdd/mail-vault-file) t)
           (setq temporary nil)
-          (set-file-modes (sanityinc/mail-vault-file) #o600)
-          (sanityinc/mail-vault-lock)
+          (set-file-modes (jdd/mail-vault-file) #o600)
+          (jdd/mail-vault-lock)
           ;; Parse a separate copy so clearing the caller's password is safe.
-          (setq sanityinc/mail-vault--profile
+          (setq jdd/mail-vault--profile
                 (json-parse-string plaintext :object-type 'plist :null-object nil)))
       (when (and temporary (file-exists-p temporary)) (delete-file temporary))
       (dolist (value (list passphrase plaintext ciphertext))
         (when (stringp value) (clear-string value))))))
 
-(defun sanityinc/mail-vault--secret ()
+(defun jdd/mail-vault--secret ()
   "Return the saved password only inside the local mail authentication flow."
-  (plist-get (sanityinc/mail-vault--unlock) :password))
+  (plist-get (jdd/mail-vault--unlock) :password))
 
-(defun sanityinc/mail-vault--search (&rest spec)
+(defun jdd/mail-vault--search (&rest spec)
   "Return a lazy credential only for this account and encrypted mail ports."
   (let* ((host (plist-get spec :host)) (port (plist-get spec :port)) (user (plist-get spec :user))
          (hosts (if (listp host) host (list host)))
          (ports (mapcar (lambda (value) (format "%s" value))
                         (if (listp port) port (list port))))
-         (imap-match (and (or (member sanityinc/mail-imap-host hosts)
-                             (member sanityinc/mail-account-name hosts))
-                          (member (number-to-string sanityinc/mail-imap-port) ports)))
-         (smtp-match (and (member sanityinc/mail-smtp-host hosts)
-                          (member (number-to-string sanityinc/mail-smtp-port) ports)))
+         (imap-match (and (or (member jdd/mail-imap-host hosts)
+                             (member jdd/mail-account-name hosts))
+                          (member (number-to-string jdd/mail-imap-port) ports)))
+         (smtp-match (and (member jdd/mail-smtp-host hosts)
+                          (member (number-to-string jdd/mail-smtp-port) ports)))
          (matched-port (car (or imap-match smtp-match))))
-    (when (and (sanityinc/mail-vault-enabled-p)
-               matched-port sanityinc/mail--login
-               (or (null user) (equal user sanityinc/mail--login))
+    (when (and (jdd/mail-vault-enabled-p)
+               matched-port jdd/mail--login
+               (or (null user) (equal user jdd/mail--login))
                (not (plist-get spec :delete))
                (cl-every (lambda (key) (memq key '(:host :port :user :secret)))
                          (plist-get spec :require)))
-      (list (list :host (if imap-match sanityinc/mail-imap-host sanityinc/mail-smtp-host) :port matched-port
-                  :user sanityinc/mail--login :secret #'sanityinc/mail-vault--secret)))))
+      (list (list :host (if imap-match jdd/mail-imap-host jdd/mail-smtp-host) :port matched-port
+                  :user jdd/mail--login :secret #'jdd/mail-vault--secret)))))
 
-(defun sanityinc/mail-vault--parse (entry)
+(defun jdd/mail-vault--parse (entry)
   "Recognize only the private-mail-gpg auth source."
   (when (eq entry 'private-mail-gpg)
     (auth-source-backend :type 'private-mail-gpg :source "private-mail-gpg"
-                         :search-function #'sanityinc/mail-vault--search)))
-(add-hook 'auth-source-backend-parser-functions #'sanityinc/mail-vault--parse)
+                         :search-function #'jdd/mail-vault--search)))
+(add-hook 'auth-source-backend-parser-functions #'jdd/mail-vault--parse)
 (provide 'init-mail-vault)
 ;;; init-mail-vault.el ends here

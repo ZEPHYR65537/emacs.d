@@ -1,15 +1,18 @@
 # Gnus 邮件与可选加密凭据
 
-`init-mail` 经 Purcell 的 `init-personal` 模块列表加载。使用 Emacs 内置的
+`init-mail` 经 Purcell 的 `init-personal` 模块列表按需加载。使用 Emacs 内置的
 Gnus、nnimap、smtpmail 和 auth-source，不引入另一套包管理器。
-启动 Emacs 不会连接邮箱、解密凭据或询问密码。
+启动 Emacs 只注册命令，不加载 Gnus 或保险库，不连接邮箱、解密凭据或询问密码。
+
+本仓库新增的邮件命令使用 `jdd/` 前缀。旧版 `sanityinc/mail*` 名称不再使用；
+如自行写过本机设置，请更新变量名。已有密文格式与存储位置保持兼容，无需重新加密。
 
 ## 配置与使用
 
-- `C-c m` / `M-x sanityinc/mail`：打开邮件前端；首次使用时在本机设置账户。
-- `M-x sanityinc/mail-configure-account`：修改服务器、端口、TLS 方式及身份。
+- `C-c m` / `M-x jdd/mail`：打开邮件前端；首次使用时在本机设置账户。
+- `M-x jdd/mail-configure-account`：修改服务器、端口、TLS 方式及身份。
   修改前先用 `q` 退出 Gnus。已启用持久化时会重新询问密码及加密口令并更新密文。
-- `M-x sanityinc/mail-compose`：写信。附件用 `C-c C-a`，发送用 `C-c C-c`。
+- `M-x jdd/mail-compose`：写信。附件用 `C-c C-a`，发送用 `C-c C-c`。
 
 服务器和身份均由用户输入，仓库中没有实际域名、邮箱或用户名。
 IMAP/SMTP 可以使用不同主机名和自定义端口；当前支持一个主账户、共享的登录名及密码。
@@ -40,18 +43,18 @@ TLS compatibility 默认选择 `default`；仅当确认有协商兼容问题时�
 
 ## 可选：GnuPG 加密持久化，Windows / Linux 通用
 
-1. 运行 `M-x sanityinc/mail-enable-persistence`。
+1. 运行 `M-x jdd/mail-enable-persistence`。
 2. 在本机输入并确认邮箱密码。
 3. 选择并确认一个**独立的保险库解锁口令**。该口令不会保存到磁盘。
 4. 此后重启 Emacs，第一次进入邮箱只需解锁一次；服务器设置、邮箱身份和密码
    从加密文件恢复，不再逐项询问。
 
 本次解锁后的凭据保留在 Emacs 内存，直到主动锁定或退出。
-锁定：`M-x sanityinc/mail-forget-passwords`。这会清除账户缓存及保险库内存，
+锁定：`M-x jdd/mail-forget-passwords`。这会清除账户缓存及保险库内存，
 不删除密文，也不会断开已经认证的连接。
 
-更换密码或解锁口令：再次运行 `sanityinc/mail-enable-persistence`。
-关闭持久化：`M-x sanityinc/mail-disable-persistence`，只删除 `account.gpg`，
+更换密码或解锁口令：再次运行 `jdd/mail-enable-persistence`。
+关闭持久化：`M-x jdd/mail-disable-persistence`，只删除 `account.gpg`，
 保留邮件、草稿、GPG 工作目录，恢复仅会话模式。请自行处理其他设备和备份中的副本。
 
 默认密文路径：
@@ -61,7 +64,7 @@ TLS compatibility 默认选择 `default`；仅当确认有协商兼容问题时�
 ```
 
 设置了 `XDG_DATA_HOME` 时，使用其下的 `emacs/mail/credentials/account.gpg`。
-也可在本机配置 `sanityinc/mail-vault-directory`。文件不属于 Emacs 配置仓库；
+也可在本机配置 `jdd/mail-vault-directory`。文件不属于 Emacs 配置仓库；
 即使是密文，也不要提交到 Git。
 
 迁移到另一台 Windows/Linux：安装 GnuPG 2.x、启用相同模块，把 **account.gpg**
@@ -73,7 +76,7 @@ DPAPI 或复制私钥；不需要同步旁边的 `gpg-home/` 目录。
 
 优先在 PATH 中寻找 `gpg` / `gpg2`。Windows 也会尝试已有的 Git for Windows、
 Scoop Git 或 GnuPG 的常见安装位置。必要时只在本机设置
-`sanityinc/mail-gpg-program` 为 GPG 路径；这不是账户信息或密码。
+`jdd/mail-gpg-program` 为 GPG 路径；这不是账户信息或密码。
 
 ### 存储边界
 
@@ -89,7 +92,7 @@ Scoop Git 或 GnuPG 的常见安装位置。必要时只在本机设置
 ## 邮件状态与排错
 
 默认状态目录：`~/.local/share/emacs/mail/state/`（支持 `XDG_DATA_HOME`）。
-已有会话/本机自定义的 `sanityinc/mail-state-directory` 可继续使用，不自动迁移邮件。
+已有会话/本机自定义的 `jdd/mail-state-directory` 可继续使用，不自动迁移邮件。
 草稿和本地已发送副本留在状态目录；已发送副本是本地 nnfolder 的 `sent` 分组，
 不会自动追加到服务器 Sent 文件夹。自动过期删除已禁用。
 

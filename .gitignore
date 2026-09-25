@@ -67,3 +67,11 @@ site-lisp/package/
 /lisp/init-local.el
 /lisp/init-preload-local.el
 /recentf.eld
+
+# Private reading/mail state and credentials never belong in this repository.
+/nov-places
+/.authinfo*
+/.netrc
+/.gnus*
+/.newsrc*
+*.gpg
