@@ -6,7 +6,7 @@
 (require 'init-local-packages)
 
 (defvar sanityinc/personal-modules
-  '(init-comb-grid init-mmix init-nov init-static-site)
+  '(init-comb-grid init-mmix init-nov init-static-site init-mail)
   "Personal feature modules to load.
 Set in init-preload-local.el to select features for a particular machine.")
 
